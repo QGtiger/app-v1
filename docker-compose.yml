@@ -1,0 +1,28 @@
+services:
+  opencode-sandbox:
+    container_name: sandbox-host
+    build: ./apps/opencode-sandbox
+    ports:
+      - "55001:4096"
+    volumes:
+      - workspace:/workspace
+    env_file: .env
+    restart: always
+
+  server:
+    container_name: sandbox-server
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    ports:
+      - "3060:3060"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/app/data
+    env_file: .env
+    restart: always
+    depends_on:
+      - opencode-sandbox
+
+volumes:
+  workspace:

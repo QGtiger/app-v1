@@ -62,6 +62,28 @@ app.post("/api/workspaces", async (c) => {
 });
 
 /**
+ * 查询单个 workspace 信息：通过 sessionId 换取 directory / port / previewUrl。
+ * 前端刷新聊天页时调此接口恢复 directory（location.state 不持久）。
+ */
+app.get("/api/workspaces/:sessionId", async (c) => {
+  const { sessionId } = c.req.param();
+  if (!ID_RE.test(sessionId)) {
+    return c.json({ error: "invalid sessionId" }, 400);
+  }
+  const entry = getSession(sessionId);
+  if (!entry) {
+    return c.json({ error: "workspace not found" }, 404);
+  }
+  const { appId, port } = entry;
+  return c.json({
+    sessionId,
+    directory: dirOf(appId),
+    previewPort: port,
+    previewUrl: preview.previewUrl(port),
+  });
+});
+
+/**
  * 停止预览：kill 该端口的 vite。保留目录/opencode session/store 映射，
  * 再调 init 会自动重启 vite。用于手动释放内存。
  */

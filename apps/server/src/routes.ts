@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
 import { nanoid } from "nanoid";
-import { sandboxContainer } from "./config";
+import { sandboxContainer, serveUrl } from "./config";
 import { execInContainer } from "./docker";
 import * as preview from "./preview";
 import { dirOf } from "./preview";
@@ -61,6 +61,7 @@ app.post("/api/workspaces", async (c) => {
       directory: dir,
       previewPort: port,
       previewUrl: preview.previewUrl(port),
+      serveUrl,
     });
   } catch (e) {
     // 建失败清掉残留目录，避免脏数据
@@ -91,6 +92,7 @@ app.get("/api/workspaces/:sessionId", async (c) => {
     directory: dirOf(appId),
     previewPort: port,
     previewUrl: preview.previewUrl(port),
+    serveUrl,
   });
 });
 
@@ -201,6 +203,7 @@ app.get("/api/workspaces/:sessionId/init", async (c) => {
       directory: dir,
       port,
       previewUrl: preview.previewUrl(port),
+      serveUrl,
     });
 
     try {

@@ -13,11 +13,15 @@ import {
   VITE_PORT_START,
   VITE_PORT_END,
   PREVIEW_HOST,
+  PUBLIC_DOMAIN,
 } from "./config";
 import { execInContainer, execInContainerStream } from "./docker";
 import { allPorts } from "./store";
 
-export const previewUrl = (port: number) => `http://${PREVIEW_HOST}:${port}`;
+export const previewUrl = (port: number) =>
+  PUBLIC_DOMAIN
+    ? `https://preview-${port}.${PUBLIC_DOMAIN}`
+    : `http://${PREVIEW_HOST}:${port}`;
 
 const dirOf = (appId: string) => `/workspace/app-${appId}`;
 const logFile = (appId: string) => `/tmp/vite-${appId}.log`;

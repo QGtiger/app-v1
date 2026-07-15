@@ -24,3 +24,14 @@ export const VITE_PORT_END = Number(process.env.VITE_PORT_END ?? 5199);
 
 // 预览地址的宿主机名，返回给浏览器拼 previewUrl。
 export const PREVIEW_HOST = process.env.PREVIEW_HOST ?? "localhost";
+
+// 生产环境泛域名（如 "lightfish.top"）。为空时走本地 dev 模式。
+// 设定后：serveUrl=https://oc.${PUBLIC_DOMAIN}，previewUrl=https://preview-${port}.${PUBLIC_DOMAIN}
+export const PUBLIC_DOMAIN = process.env.PUBLIC_DOMAIN ?? "";
+
+
+// 浏览器直连 opencode serve 的对外地址。
+// prod: https://oc.${PUBLIC_DOMAIN}；dev: SERVE_URL env（默认 http://localhost:55001）
+export const serveUrl = PUBLIC_DOMAIN
+  ? `https://oc.${PUBLIC_DOMAIN}`
+  : process.env.SERVE_URL ?? "http://localhost:55001";

@@ -46,6 +46,11 @@ export function setSession(sessionId: string, entry: SessionEntry): void {
   persist();
 }
 
+export function removeSession(sessionId: string): void {
+  sessions.delete(sessionId);
+  persist();
+}
+
 /** 当前已分配的所有端口（供端口分配取 max+1） */
 export function allPorts(): number[] {
   return [...sessions.values()].map((v) => v.port);

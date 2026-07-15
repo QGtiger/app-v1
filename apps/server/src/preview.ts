@@ -37,17 +37,14 @@ async function listeningPorts(): Promise<Set<number>> {
 }
 
 /**
- * 递增分配端口：next = store 已分配端口的最大值 + 1（无则 START），从 next 往上找
- * 第一个未被监听占用的端口。不从头扫、不复用已释放的端口，用完整个池子就报错。
+ * 分配端口：从 START 往上扫，取第一个既未在 store 声明（claimed）、也未在容器内
+ * 监听（occupied）的端口。复用 delete 释放的端口，无碎片化。整个池子用完才报错。
  */
 export async function assignPreviewPort(): Promise<number> {
   const occupied = await listeningPorts();
   const claimed = new Set(allPorts());
-  let next =
-    claimed.size === 0 ? VITE_PORT_START : Math.max(...claimed) + 1;
-  while (next <= VITE_PORT_END) {
-    if (!occupied.has(next)) return next;
-    next++;
+  for (let p = VITE_PORT_START; p <= VITE_PORT_END; p++) {
+    if (!occupied.has(p) && !claimed.has(p)) return p;
   }
   throw new Error(
     `no free preview port in [${VITE_PORT_START}, ${VITE_PORT_END}]`,

@@ -22,3 +22,18 @@ export async function createSession(directory: string): Promise<string> {
   }
   return sessionId;
 }
+
+/** 删 opencode session（含消息/历史）。directory 可选，传入更稳（opencode 可能按目录定位 session）。 */
+export async function deleteSession(
+  sessionId: string,
+  directory?: string,
+): Promise<void> {
+  const client = createOpencodeClient({
+    baseUrl: `http://${OPENCODE_HOST}:${OPENCODE_PORT}`,
+    ...(directory ? { directory } : {}),
+  });
+  await client.session.delete({
+    sessionID: sessionId,
+    ...(directory ? { directory } : {}),
+  });
+}

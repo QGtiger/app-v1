@@ -14,12 +14,19 @@ RUN apt-get update \
 
 # pnpm + @lightfish/cli（workspace 脚手架用，server 会 exec lightfish create 进来）+ opencode CLI
 # 单个 RUN 减层数；pnpm store 固定到 /opt/pnpm-store 便于缓存挂载
+# opencode 版本固定，避免 latest 每次构建自动升级；升级时改这一行即可
+ARG OPENCODE_VERSION=v1.18.1
 RUN npm install -g pnpm@9.12.0 \
     && pnpm config set store-dir /opt/pnpm-store --global \
     && npm install -g @lightfish/cli \
     && arch=$(dpkg --print-architecture) \
+    && case "$arch" in \
+         amd64) oc_arch=x64 ;; \
+         arm64) oc_arch=arm64 ;; \
+         *) echo "unsupported arch: $arch" >&2; exit 1 ;; \
+       esac \
     && curl -fsSL -o /tmp/opencode.tar.gz \
-         "https://github.com/anomalyco/opencode/releases/latest/download/opencode-linux-${arch}.tar.gz" \
+         "https://github.com/anomalyco/opencode/releases/download/${OPENCODE_VERSION}/opencode-linux-${oc_arch}.tar.gz" \
     && tar -xzf /tmp/opencode.tar.gz -C /usr/local/bin/ \
     && chmod +x /usr/local/bin/opencode \
     && rm -f /tmp/opencode.tar.gz

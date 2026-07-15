@@ -4,6 +4,7 @@ services:
     build: ./apps/opencode-sandbox
     ports:
       - "55001:4096"                    # 对齐 ai-web 的 OPENCODE_BASE_URL，浏览器直连
+      - "5174-5199:5174-5199"           # 每个 workspace 的 vite 预览端口池
     volumes:
       - workspace:/workspace            # 生成的项目持久化，容器重建不丢
     env_file: .env

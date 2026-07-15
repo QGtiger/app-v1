@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.13.0",
+    "@opencode-ai/sdk": "^1.17.16",
     "dockerode": "^4.0.0",
     "hono": "^4.7.0",
     "nanoid": "^5.0.3"

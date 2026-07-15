@@ -1,6 +1,7 @@
 import { serve } from "@hono/node-server";
 import { routes } from "./routes";
 import { sandboxContainer, CONTAINER_NAME, PORT } from "./config";
+import { loadStore } from "./store";
 
 /**
  * 轮询等待 sandbox 容器进入 running 状态。
@@ -24,6 +25,9 @@ async function waitForContainer(timeout = 30000): Promise<void> {
 
 // 顶层 await：package.json 的 "type":"module" + tsup esm 输出支持。
 await waitForContainer();
+
+// 加载持久化的 sessionId→{appId,port} 映射
+loadStore();
 
 const server = serve({
   fetch: routes.fetch,

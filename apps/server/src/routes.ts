@@ -30,10 +30,17 @@ app.use(cors());
 /**
  * 新建 workspace：lightfish create --skip-install（只脚手架，不装依赖，放锁外）
  * + 分配预览端口 + 调 opencode SDK 建 session 拿 sessionId + 存映射（锁内原子）。
+ * + 如果 body 带 message，异步发给 session（promptAsync），AI 后台处理。
  */
 app.post("/api/workspaces", async (c) => {
   const appId = nanoid(12);
   const dir = dirOf(appId);
+  let body: { message?: string } = {};
+  try {
+    body = await c.req.json();
+  } catch {
+    // 无 body 或非 JSON，忽略
+  }
   try {
     await execInContainer(
       sandboxContainer,
@@ -45,6 +52,10 @@ app.post("/api/workspaces", async (c) => {
       setSession(sessionId, { appId, port });
       return { sessionId, port };
     });
+    // 有消息就异步发给 session，AI 后台开始处理
+    if (body.message?.trim()) {
+      await opencode.sendPrompt(sessionId, dir, body.message.trim());
+    }
     return c.json({
       sessionId,
       directory: dir,

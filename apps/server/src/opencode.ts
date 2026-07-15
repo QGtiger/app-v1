@@ -37,3 +37,19 @@ export async function deleteSession(
     ...(directory ? { directory } : {}),
   });
 }
+
+/** 异步发消息（promptAsync），发完立即返回，AI 在后台处理。 */
+export async function sendPrompt(
+  sessionId: string,
+  directory: string,
+  text: string,
+): Promise<void> {
+  const client = createOpencodeClient({
+    baseUrl: `http://${OPENCODE_HOST}:${OPENCODE_PORT}`,
+    directory,
+  });
+  await client.session.promptAsync({
+    sessionID: sessionId,
+    parts: [{ type: "text", text }],
+  });
+}

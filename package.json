@@ -1,5 +1,5 @@
 {
-  "name": "app-v2",
+  "name": "app-v1",
   "private": true,
   "scripts": {
     "dev:server": "pnpm --filter server dev",

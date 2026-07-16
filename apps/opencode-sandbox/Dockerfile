@@ -12,14 +12,16 @@ RUN apt-get update \
        tini \
     && rm -rf /var/lib/apt/lists/*
 
-# pnpm + @lightfish/cli（workspace 脚手架用，server 会 exec lightfish create 进来）+ opencode CLI
-# 单个 RUN 减层数；pnpm store 固定到 /opt/pnpm-store 便于缓存挂载
-# opencode 版本固定，避免 latest 每次构建自动升级；升级时改这一行即可
-ARG OPENCODE_VERSION=v1.18.1
+# pnpm：store 固定到 /opt/pnpm-store 便于缓存挂载
 RUN npm install -g pnpm@9.12.0 \
-    && pnpm config set store-dir /opt/pnpm-store --global \
-    && npm install -g @lightfish/cli \
-    && arch=$(dpkg --print-architecture) \
+    && pnpm config set store-dir /opt/pnpm-store --global
+
+# @lightfish/cli：workspace 脚手架，server 会 exec lightfish create 进来
+RUN npm install -g @lightfish/cli@0.0.5
+
+# opencode CLI：版本固定避免 latest 自动升级；升级时改 OPENCODE_VERSION 即可
+ARG OPENCODE_VERSION=v1.18.1
+RUN arch=$(dpkg --print-architecture) \
     && case "$arch" in \
          amd64) oc_arch=x64 ;; \
          arm64) oc_arch=arm64 ;; \

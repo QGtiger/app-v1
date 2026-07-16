@@ -6,6 +6,7 @@ import { sandboxContainer, serveUrl } from "./config";
 import { execInContainer } from "./docker";
 import * as preview from "./preview";
 import { dirOf } from "./preview";
+import * as publish from "./publish";
 import * as opencode from "./opencode";
 import { getSession, setSession, removeSession } from "./store";
 
@@ -244,6 +245,96 @@ app.get("/api/workspaces/:sessionId/init", async (c) => {
     } catch (e) {
       console.error("[init] error:", e);
       await send("error", { phase: "unknown", message: String(e) });
+    }
+  });
+});
+
+/**
+ * 发布：在 sandbox 内跑 `lightfish publish`（build → 上传 OSS → 通知部署 API），SSE 流式推日志。
+ * 发布凭证靠 sandbox 容器 env_file(.env) 的 process.env 提供，无需 server 额外传 env。
+ * 按 sessionId 互斥（同 workspace 串行），不阻塞其他 workspace 与 create/init/delete。
+ *
+ * 事件协议：
+ *   publish.start {}
+ *   publish.log   {stream:"stdout"|"stderr", text}
+ *   publish.done  {version, appName, ossIndexUrl, domain}
+ *   error         {message, phase?:"build"|"upload"|"notify"|"unknown"}
+ *
+ * 前置：workspace 目录存在 + node_modules 已装（否则报错提示先 init）。
+ */
+app.post("/api/workspaces/:sessionId/publish", async (c) => {
+  const { sessionId } = c.req.param();
+  if (!ID_RE.test(sessionId)) {
+    return c.json({ error: "invalid sessionId" }, 400);
+  }
+  const entry = getSession(sessionId);
+  if (!entry) {
+    return c.json({ error: "workspace not found" }, 404);
+  }
+  const { appId } = entry;
+  const dir = dirOf(appId);
+
+  let body: { note?: string } = {};
+  try {
+    body = await c.req.json();
+  } catch {
+    // 无 body 或非 JSON，忽略
+  }
+
+  const exists = await execInContainer(
+    sandboxContainer,
+    `test -d ${dir} && echo exists || echo missing`,
+  );
+  if (!exists.includes("exists")) {
+    return c.json({ error: "workspace not found" }, 404);
+  }
+
+  return streamSSE(c, async (sse) => {
+    const aborted = { current: false };
+    sse.onAbort(() => {
+      aborted.current = true;
+    });
+    const send = async (event: string, data: unknown) => {
+      if (aborted.current) return;
+      try {
+        await sse.writeSSE({ event, data: JSON.stringify(data) });
+      } catch {
+        // 客户端已断开，忽略写入失败
+      }
+    };
+
+    await send("publish.start", {});
+
+    // 依赖未装则 build 必失败，提前拦截
+    if (!(await preview.hasNodeModules(appId))) {
+      await send("error", {
+        message: "依赖未安装，请先调用 init 安装依赖后再发布",
+        phase: "install",
+      });
+      return;
+    }
+
+    // 从 [publish] 日志推断当前阶段，失败时用于 error.phase
+    let phase: "build" | "upload" | "notify" | "unknown" = "build";
+
+    try {
+      const result = await publish.withPublishLock(sessionId, () =>
+        publish.publishWorkspace(
+          appId,
+          { note: body.note },
+          (text, stream) => {
+            if (text.includes("[publish] 开始上传 OSS")) phase = "upload";
+            else if (text.includes("[publish] 开始通知")) phase = "notify";
+            else if (text.includes("[publish] 开始构建")) phase = "build";
+            send("publish.log", { stream, text });
+          },
+        ),
+      );
+      if (aborted.current) return;
+      await send("publish.done", result);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      await send("error", { message, phase });
     }
   });
 });

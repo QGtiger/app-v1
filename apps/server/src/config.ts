@@ -35,3 +35,10 @@ export const PUBLIC_DOMAIN = process.env.PUBLIC_DOMAIN ?? "";
 export const serveUrl = PUBLIC_DOMAIN
   ? `https://oc.${PUBLIC_DOMAIN}`
   : process.env.SERVE_URL ?? "http://localhost:55001";
+
+// publish：发布产物 OSS 根地址（与 CLI 的 BASE_ROOT 默认值一致），用于拼 ossIndexUrl 返回前端。
+export const OSS_BASE_ROOT =
+  process.env.BASE_ROOT ?? "https://lf-frontend.oss-cn-beijing.aliyuncs.com";
+
+// publish：单次发布总超时（含 build + 上传 + 通知），超时后按 workspace 清理残留进程。
+export const PUBLISH_TIMEOUT_MS = Number(process.env.PUBLISH_TIMEOUT_MS ?? 300000);

@@ -7,6 +7,7 @@ services:
       - "127.0.0.1:5174-5199:5174-5199"      # 每个 workspace 的 vite 预览端口池（仅本机）
     volumes:
       - workspace:/workspace            # 生成的项目持久化，容器重建不丢
+      - opencode-data:/root/.local/share/opencode   # opencode.db 持久化：session/聊天历史，容器重建不丢
     env_file: .env
     restart: always
 
@@ -27,3 +28,4 @@ services:
 
 volumes:
   workspace:
+  opencode-data:

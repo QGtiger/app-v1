@@ -17,7 +17,7 @@ RUN npm install -g pnpm@9.12.0 \
     && pnpm config set store-dir /opt/pnpm-store --global
 
 # @lightfish/cli：workspace 脚手架，server 会 exec lightfish create 进来
-RUN npm install -g @lightfish/cli@0.0.5
+RUN npm install -g @lightfish/cli@0.0.6
 
 # opencode CLI：版本固定避免 latest 自动升级；升级时改 OPENCODE_VERSION 即可
 ARG OPENCODE_VERSION=v1.18.1

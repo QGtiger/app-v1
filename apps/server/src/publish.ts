@@ -65,6 +65,24 @@ export async function publishWorkspace(
   const appName = await readAppName(appId);
 
   const note = options.note?.trim();
+  const commitMsg = note || `publish ${version}`;
+
+  // 发布前用发布说明提交工作区改动（commit 失败不阻断发布，仅告警）
+  const gitUser = `-c user.email=publish@lightfish.top -c user.name=lightfish`;
+  try {
+    const commitOut = await execInContainer(
+      sandboxContainer,
+      `cd ${dir} && git ${gitUser} add -A && git ${gitUser} commit -m ${shellQuote(commitMsg)} --allow-empty`,
+    );
+    onChunk(`[publish] git committed: ${commitMsg}\n`, "stdout");
+    if (commitOut?.trim()) onChunk(`${commitOut}\n`, "stdout");
+  } catch (e) {
+    onChunk(
+      `[publish] git commit 失败: ${e instanceof Error ? e.message : String(e)}\n`,
+      "stderr",
+    );
+  }
+
   const noteArg = note ? ` --note ${shellQuote(note)}` : "";
   const cmd = `cd ${dir} && lightfish publish --version ${version}${noteArg}`;
 

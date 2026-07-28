@@ -22,6 +22,9 @@
   "agent": {
     "build": {
       "prompt": "{file:./prompts/build.txt}"
+    },
+    "plan": {
+      "prompt": "{file:./prompts/plan.txt}"
     }
   },
   "provider": {

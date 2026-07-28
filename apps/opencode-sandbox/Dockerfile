@@ -40,6 +40,7 @@ ENV HOME=/root
 RUN mkdir -p /root/.config/opencode
 COPY opencode.json /root/.config/opencode/opencode.json
 COPY prompts/ /root/.config/opencode/prompts/
+COPY tools/ /root/.config/opencode/tools/
 
 COPY start.sh /start.sh
 RUN chmod +x /start.sh

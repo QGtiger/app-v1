@@ -23,7 +23,9 @@ RUN npm install -g pnpm@9.12.0 \
     && pnpm config set store-dir /opt/pnpm-store --global
 
 # @lightfish/cli：workspace 脚手架，server 会 exec lightfish create 进来
-RUN npm install -g @lightfish/cli@0.0.7
+# @latest 只在本层真正重跑时解析最新版（平时命中缓存不会自动升级）；
+# 想强制刷新到最新：docker compose build --no-cache opencode-sandbox
+RUN npm install -g @lightfish/cli@latest
 
 # opencode CLI：版本固定避免 latest 自动升级；升级时改 OPENCODE_VERSION 即可
 # GitHub 直连在国内服务器上极慢，走 gh-proxy.com 加速前缀（2026-10 实测可用；

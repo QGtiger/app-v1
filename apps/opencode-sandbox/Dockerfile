@@ -1,8 +1,14 @@
 # syntax=docker/dockerfile:1.7
 FROM node:24-slim
 
-# 基础工具：git 用于 diff/file 操作，lsof 用于端口检查，tini 作为 PID 1 处理信号与僵尸进程
-RUN apt-get update \
+# 国内构建加速：apt 换阿里云源（bookworm 的源可能在两个位置，逐个存在者替换），
+# npm 换 npmmirror（写入 /root/.npmrc，对后续所有 RUN 里跑的 npm/pnpm 生效）
+RUN set -eux; \
+    for f in /etc/apt/sources.list /etc/apt/sources.list.d/debian.sources; do \
+      [ -f "$f" ] && sed -i 's|deb.debian.org|mirrors.aliyun.com|g' "$f" || true; \
+    done; \
+    npm config set registry https://registry.npmmirror.com; \
+    apt-get update \
     && apt-get install -y --no-install-recommends \
        ca-certificates \
        curl \
@@ -17,9 +23,11 @@ RUN npm install -g pnpm@9.12.0 \
     && pnpm config set store-dir /opt/pnpm-store --global
 
 # @lightfish/cli：workspace 脚手架，server 会 exec lightfish create 进来
-RUN npm install -g @lightfish/cli@0.0.8
+RUN npm install -g @lightfish/cli@0.0.7
 
 # opencode CLI：版本固定避免 latest 自动升级；升级时改 OPENCODE_VERSION 即可
+# GitHub 直连在国内服务器上极慢，走 gh-proxy.com 加速前缀（2026-10 实测可用；
+# ghfast.top / mirror.ghproxy.com 已失效）。若再失效，换其他加速站，前缀拼法不变
 ARG OPENCODE_VERSION=v1.18.1
 RUN arch=$(dpkg --print-architecture) \
     && case "$arch" in \
@@ -27,8 +35,8 @@ RUN arch=$(dpkg --print-architecture) \
          arm64) oc_arch=arm64 ;; \
          *) echo "unsupported arch: $arch" >&2; exit 1 ;; \
        esac \
-    && curl -fsSL -o /tmp/opencode.tar.gz \
-         "https://github.com/anomalyco/opencode/releases/download/${OPENCODE_VERSION}/opencode-linux-${oc_arch}.tar.gz" \
+    && curl -fsSL --retry 3 -o /tmp/opencode.tar.gz \
+         "https://gh-proxy.com/https://github.com/anomalyco/opencode/releases/download/${OPENCODE_VERSION}/opencode-linux-${oc_arch}.tar.gz" \
     && tar -xzf /tmp/opencode.tar.gz -C /usr/local/bin/ \
     && chmod +x /usr/local/bin/opencode \
     && rm -f /tmp/opencode.tar.gz

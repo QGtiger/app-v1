@@ -6,8 +6,13 @@ WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/server/package.json ./apps/server/
 
-# 固定 pnpm 版本对齐 packageManager，否则装到 v11 会忽略 onlyBuiltDependencies
-RUN npm install -g pnpm@9.15.0 && pnpm install
+# 固定 pnpm 版本对齐 packageManager，否则装到 v11 会忽略 onlyBuiltDependencies。
+# 国内构建加速：npm 走 npmmirror；pnpm store 用 BuildKit 缓存挂载，
+# 锁文件变化导致本层重跑时也不必全量重新下载依赖包。
+RUN npm config set registry https://registry.npmmirror.com \
+    && npm install -g pnpm@9.15.0 \
+    && pnpm config set store-dir /opt/pnpm-store --global
+RUN --mount=type=cache,id=pnpm-store,target=/opt/pnpm-store pnpm install
 
 COPY apps/server/ ./apps/server/
 RUN pnpm --filter server build

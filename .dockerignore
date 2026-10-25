@@ -1,0 +1,15 @@
+# server 镜像的构建上下文是仓库根（见 docker-compose.yml build.context），
+# 这里排除无关内容，避免每次 build 全量传输上下文（node_modules/.git 都是几百 MB 级）
+.git
+.opencode
+.idea
+.vscode
+.DS_Store
+node_modules
+**/node_modules
+apps/opencode-sandbox
+data
+deploy
+docs
+.env
+.env.*

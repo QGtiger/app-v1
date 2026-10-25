@@ -1,5 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "model": "zhipuai-coding-plan/glm-5.3-flash",
   "permission": {
     "bash": {
       "*": "allow",
@@ -49,6 +50,11 @@
     "gemini": {
       "options": {
         "apiKey": "{env:GEMINI_API_KEY}"
+      }
+    },
+    "zhipuai-coding-plan": {
+      "options": {
+        "apiKey": "{env:ZHIPU_API_KEY}"
       }
     }
   }

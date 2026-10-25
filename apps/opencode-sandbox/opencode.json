@@ -26,6 +26,12 @@
     },
     "plan": {
       "prompt": "{file:./prompts/plan.txt}"
+    },
+    "qa-verify": {
+      "description": "接收验收修改记录，定位源码并完成修复",
+      "mode": "primary",
+      "model": "zhipuai-coding-plan/glm-5.3-flash",
+      "prompt": "{file:./prompts/qa-verify.txt}"
     }
   },
   "provider": {
